@@ -4,7 +4,8 @@
   "description": "This is the backend for my bolt project",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon node -r dotenv/config src/index.js"
+    "start": "nodemon node -r dotenv/config src/index.js",
+     "build": "npm install --prefix ./client && npm run build --prefix ./client && npm install"
   },
   "type": "module",
   "author": "PoonamMehan",
