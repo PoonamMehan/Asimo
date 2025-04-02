@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  build: {
+      target: "ES2022" 
+    },
   server: {
     proxy: {
       '/api': {
