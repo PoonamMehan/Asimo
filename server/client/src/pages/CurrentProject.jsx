@@ -1,4 +1,4 @@
-import { ChatWithBolty } from "../components/chatWithBolty"
+import { ChatWithBolty } from "../components/ChatWithBolty.jsx"
 export const CurrentProject = () => {
     return(
         <>

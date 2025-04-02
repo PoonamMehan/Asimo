@@ -1,9 +1,9 @@
 import axios from 'axios';
 import {useState, useEffect} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import { addInitialFiles, addMessages, managePromptsArr, manageChatMsgHistory, manageAllFilesInWC} from '../store/filesAndFoldersSlice';
-import { accessFileContentFromWC, createFilesInWCFromObj, createFilesInWCUsingArray, getAllCurrentFolderAndFileNamesInWC, runScriptInWC } from '../utils/webCon';
-import { parseXml } from '../utils/respParser';
+import { addInitialFiles, addMessages, managePromptsArr, manageChatMsgHistory, manageAllFilesInWC} from '../store/filesAndFoldersSlice.js';
+import { accessFileContentFromWC, createFilesInWCFromObj, createFilesInWCUsingArray, getAllCurrentFolderAndFileNamesInWC, runScriptInWC } from '../utils/webCon.js';
+import { parseXml } from '../utils/respParser.js';
 import {useNavigate} from 'react-router-dom'
 import store from '../store/store.js';
 import arrow from "./next.png"

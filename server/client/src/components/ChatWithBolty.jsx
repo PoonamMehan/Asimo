@@ -1,6 +1,6 @@
 import {useDispatch, useSelector} from 'react-redux'
 import { useEffect, useState, useRef } from 'react'
-import { addMessages, manageChatMsgHistory, manageAllFilesInWC} from '../store/filesAndFoldersSlice'
+import { addMessages, manageChatMsgHistory, manageAllFilesInWC} from '../store/filesAndFoldersSlice.js'
 import { accessFileContentFromWC } from '../utils/webCon.js'
 import { createFilesInWCUsingArray, getAllCurrentFolderAndFileNamesInWC} from '../utils/webCon.js'
 import Editor from '@monaco-editor/react';
