@@ -286,7 +286,7 @@ export function ChatWithBolty(){
                             <div className="flex flex-grow">
                                 <div className="flex flex-col p-2 h-[70vh] overflow-y-auto border-r-[1px] border-[#2f2f2f] ">
                                 {allFilesInWC.map((element, idx)=>{
-                                    return <div key={idx} onClick={()=>changeTheFileOpened(element.path)} className="hover:cursor-pointer whitespace-pre text-gray-300" dangerouslySetInnerHTML={{ __html: `<span style="color: #8b8b8b;">${element.val}</span>` }} ></div>
+                                    return <div key={idx} onClick={()=>changeTheFileOpened(element.path)} className="hover:cursor-pointer whitespace-pre text-gray-300" dangerouslySetInnerHTML={{ __html: `<span style="color: #c1ccc2;">${element.val}</span>` }} ></div>
                                 })}
                                 </div>
                                 <div className="flex-grow">   
