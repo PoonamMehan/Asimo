@@ -125,7 +125,7 @@ export function ChatWithBolty(){
 
 
         //send the req to /get-code endpoint
-        await fetch('http://localhost:8000/api/v1/chat/get-code', {
+        await fetch('/api/v1/chat/get-code', {
             method: "Post",
             headers: {
                 "Content-Type": "application/json"

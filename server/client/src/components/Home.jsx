@@ -60,7 +60,7 @@ export function Home(){
     }
 
     const create = async ()=>{
-        const tempResp = await axios.post('http://localhost:8000/api/v1/chat/template', {
+        const tempResp = await axios.post('/api/v1/chat/template', {
             prompt: initialPrompt
         })
         const initialCodeStructure = tempResp.data.uiPrompts
@@ -146,7 +146,7 @@ export function Home(){
 
 
 
-        await fetch('http://localhost:8000/api/v1/chat/get-code', {
+        await fetch('/api/v1/chat/get-code', {
             method: "Post",
             headers: {
                 "Content-Type": "application/json"
