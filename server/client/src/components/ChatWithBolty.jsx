@@ -128,6 +128,10 @@ export function ChatWithBolty(){
             },
             body: JSON.stringify({"msgs": [...promptToGetCode]}) 
         }).then(async (res)=>{
+
+            if(!res.ok){
+                throw new Error(res)
+            }
             const decoder = new TextDecoder()
             let result = ""
             await res.body.pipeTo(new WritableStream({
@@ -206,6 +210,8 @@ export function ChatWithBolty(){
             //currenPrompt clear it
             setCurrentPrompt("")
             //streaming? 
+        }).catch((err)=>{
+            console.log(err)
         })
     }
 
@@ -283,7 +289,7 @@ export function ChatWithBolty(){
                                 </div>
                             </div>
                             
-                            </>):(url? (<iframe className="w-[900px] h-[900px]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
+                            </>):(url? (<iframe className="w-[900px] h-[80vh]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
                             )}
                             {codeIsShown? (<><div className="border-[1px] border-[#2f2f2f] bg-[#1e1e1e]" ref={ref} style={{ height: '100%', width: '100%', color: "#1e1e1e"}}></div>
                             </>):(<div></div>)}

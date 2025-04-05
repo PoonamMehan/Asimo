@@ -84,6 +84,9 @@ export function Home(){
             body: JSON.stringify({"msgs": tempResp.data.prompts.map((x)=> {return {role: "user", content: x}})})
 
         }).then(async(res)=>{
+            if(!res.ok){
+                throw new Error(res)
+            }
 
             console.log("here 2")
             const reader = res.body.getReader()

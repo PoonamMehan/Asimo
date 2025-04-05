@@ -59,7 +59,7 @@ const getContentFromLLM = async(req, res)=>{
         {role: "system", content: get_system_prompt()},
         ...msgs
     ]
-    
+    try{
     const ansStream = await getAnswerFromChatGPT(msgsArray);
     const encoder = new TextEncoder();
 
@@ -70,6 +70,11 @@ const getContentFromLLM = async(req, res)=>{
         res.write(currChunk)
     }
     res.end();
+}catch(err){
+    res.status(500).json({
+        error: err
+    })
+}
 }
 
 
