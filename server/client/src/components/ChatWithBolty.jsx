@@ -1,12 +1,14 @@
 import {useDispatch, useSelector} from 'react-redux'
 import { useEffect, useState, useRef } from 'react'
-import { addMessages, manageChatMsgHistory, manageAllFilesInWC} from '../store/filesAndFoldersSlice.js'
+import { addMessages, manageChatMsgHistory, manageAllFilesInWC, managePromptsArr} from '../store/filesAndFoldersSlice.js'
 import { accessFileContentFromWC } from '../utils/webCon.js'
 import { createFilesInWCUsingArray, getAllCurrentFolderAndFileNamesInWC} from '../utils/webCon.js'
 import Editor from '@monaco-editor/react';
 import arrow from "./next.png"
 import { useOutletContext } from "react-router-dom";
 import { useXTerm } from 'react-xtermjs'
+import store from '../store/store.js';
+import { parseXml } from '../utils/respParser.js'
 
 
 export function ChatWithBolty(){
@@ -19,10 +21,11 @@ export function ChatWithBolty(){
     const dispatch = useDispatch();
     const allFilesInWC = useSelector((state)=>state.filesAndFolders.allFilesInWC);
     const [fileContentForMonaco, setFileContentForMonaco] = useState("")
-    const {instance, test} = useOutletContext()
     const [codeIsShown, setCodeIsShown] = useState(true)
     const url = useSelector((state)=> state.filesAndFolders.iframeURL)
-    const {ref} = useXTerm()
+
+    // const {ref} = useXTerm()
+    const {instance, test, ref} = useOutletContext()
 
     useEffect(()=>{console.log("URLh", url)}, [url])
 
@@ -44,19 +47,14 @@ export function ChatWithBolty(){
         setFileContentForMonaco(fileContent)
     }
 
-    const fabricateLastMsg = async()=>{
+    const fabricateLastMsg = async(updatedChangedFiles)=>{
         let msg = ''
-        //file path + \n + ``` + \n + file content from WC (as an object) + \n + ``` + \n 
-        await Promise.all(await changedFiles.map(async(filePath)=>{
-            msg += filePath
-            msg += "\n```\n"
-            let currFileContent = await accessFileContentFromWC(filePath)
-            msg += currFileContent
-            msg += "\n```\n"
-        })
-        )
-        
-        return msg
+        const fileContents = await Promise.all(updatedChangedFiles.map(async (filePath) => {
+            let currFileContent = await accessFileContentFromWC(filePath);
+            return `${filePath}\n\`\`\`\n${currFileContent}\n\`\`\`\n`;
+        }));
+        msg += fileContents.join(""); // Join all retrieved contents
+        return msg;
     }
 
     const setMessagesInStore = (newMsgs)=>{
@@ -64,22 +62,20 @@ export function ChatWithBolty(){
     }
 
     async function getCode(){
-        //save the prompt in chatmsghistory, set the currentprompt(""), send the request to get-code endpoint, save the prompt in the prompts array -> beforesending the message handle the messages(pronpt set( the current pronpt and change the 5 pronpts up)()) -> get the response -> we have to pick apart the response and modify to show on the left(before parsed? in parsed? IN PARSED.) ([0], [length-1]) -> set in messages -> parse the response -> the mentioned files, add them in the changedFiles(store) if not exists already (think of an efficient data structure) -> createFilesInWCUsingArray() -> go through the parsed list here and as we encounter package.json add npm install in the text here (ALSO run npm install manually in the webcontainer and show in terminal) 
-        //at the end setCurrentPrompt("")
-        
-        //save the prompt in chatmsghistory(store)
-        const msgHistory = [...chatMsgHistory]
+        //as the user enters the prompt and sends it, show it on the left-side chatBox
+        const currChatMsgHistory = store.getState().filesAndFolders.chatMsgHistory
+        const msgHistory = [...currChatMsgHistory]
         msgHistory.push({role: "user", msg: currentPrompt})
         dispatch(manageChatMsgHistory(msgHistory))
 
-        //set the messages
-            //the prompts set up(at messages[3-7]) the last message(latest prompt+all the files that have been changed since the start of time, at the bigbang haha)
-                //when there are 0's in messages array(deal eith prompt in a way that if (either stop at the idx = 4 or when 0 is encountered))
-                //when there are no zeroes in messages array
+        //take in the 
         let extraText = `<bolt_running_commands>\n</bolt_running_commands>\n\nCurrent Message:\n\n${currentPrompt}\n\nFile Changes:\n\nHere is a list of all files that have been modified since the start of the conversation.This information serves as the true contents of these files!\n\nThe contents include either the full file contents or a diff (when changes are smaller and localized).\n\nUse it to:\n - Understand the latest file modifications\n - Ensure your suggestions build upon the most recent version of the files\n - Make informed decisions about changes\n - Ensure suggestions are compatible with existing code\n\n`
-        const newMessagesArr = messages.map((msg)=>{return typeof msg === "object"? {...msg} : msg})
+        const currMessages = store.getState().filesAndFolders.messages
+        const newMessagesArr = currMessages.map((msg)=>{return typeof msg === "object"? {...msg} : msg})
 
-
+        //setting up messages[], which contains all the prompts that we need to send to the LLM
+        //adding new prompts 
+        const currPromptsArr = store.getState().filesAndFolders.promptsArr
         for(let idx in newMessagesArr){
             if(newMessagesArr[idx] == 0){  
                 //currentPrompt + content of files mentioned in changedFiles(analyze the format)
@@ -93,38 +89,38 @@ export function ChatWithBolty(){
                 
                 //from idx [3- 0encountered in prompts/reached the end of prompts arr]
                 let promptManageIdx = 3
-                for(let i in promptsArr){
-                    if(promptsArr[i] == 0){
+                
+                for(let i in currPromptsArr){
+                    if(currPromptsArr[i] == 0){
                         break
                     }
-                    newMessagesArr[promptManageIdx] = {role: "user", content: promptsArr[i]}
+                    newMessagesArr[promptManageIdx] = {role: "user", content: currPromptsArr[i]}
                     promptManageIdx++;
                 }
                
                 break;
             }else if(newMessagesArr[idx] != 0 && idx == 9){
                 let promptManageIdx = 3;
-                for(let i in promptsArr){
-                    if(promptsArr[i] == 0){
+                for(let i in currPromptsArr){
+                    if(currPromptsArr[i] == 0){
                         break;
                     }
-                    newMessagesArr[promptManageIdx] = {role: "user", content: promptsArr[i]}
+                    newMessagesArr[promptManageIdx] = {role: "user", content: currPromptsArr[i]}
                     promptManageIdx++;
                 }
-
                 const content = extraText + newMessagesArr[idx].content
                 newMessagesArr[promptManageIdx] = {role: "user", content: content}
             }
         }
 
+        // console.log("chatty new Messages array ", newMessagesArr)
         //set this new and correct msgsArray in store and in session storage
-        
-        setMessagesInStore(newMessagesArr)
+        dispatch(addMessages(newMessagesArr))
 
         const promptToGetCode = newMessagesArr.filter((curr)=> curr != 0 )//check this: if there are 0s in there, just get rid of them
 
 
-        //send the req to /get-code endpoint
+        //send the req to /get-code endpoint to get all the code files from the backend
         await fetch('/api/v1/chat/get-code', {
             method: "Post",
             headers: {
@@ -132,65 +128,63 @@ export function ChatWithBolty(){
             },
             body: JSON.stringify({"msgs": [...promptToGetCode]}) 
         }).then(async (res)=>{
-            const reader = res.body.reader()
             const decoder = new TextDecoder()
             let result = ""
-            const writeableStream = new WritableStream({
-                write(chunk){
-                    result += decoder.decode(chunk, {stream: true})
-                },
-                close(){
-                    //check whether this is necessary or not
-                    //is necessary
+            await res.body.pipeTo(new WritableStream({
+                write(data){
+                    result += decoder.decode(data, {stream: true})
                 }
-            })
-            reader.pipeTo(writeableStream).then().catch()
+            }))
+            // console.log("RESULT", result)
 
             //set response in messages(store)
-            const newMessagesArr2 = messages.map((msg)=>{return typeof msg === "object"? {...msg} : msg})
-            
-            for(i in newMessagesArr2){
+            const newMessagesArr2 = newMessagesArr.map((msg)=>{return typeof msg === "object"? {...msg} : msg})
+
+            for(let i=0; i<=9; i++){
                 if(newMessagesArr2[i] == 0){
                     newMessagesArr2[i-2] = {role: "assistant", content: result}
+                    break
                 }else if(newMessagesArr2[i] != 0 && i == 9){
                     newMessagesArr2[i-1] = {role: "assistant", content: result}
-                }   
+                }
             }
 
-
+            // console.log("NewMessagesArr2 ", newMessagesArr2)
 
             //get the parsed response
-            const parsedResp = parseXml(result)// [0] and [length-1] has the text
-            //files in other elements
+            const parsedResp = parseXml(result)
 
-            //print on the left side -> save in chatMsgs
-            //CHATMSGS: FOR NOW SAVE ALL, BUT CHANGE TO SAVING THE VERY FIRST MSG AND THE LAST MSG RESP AND PROMPT
-            //parsed response -> in the initial /template add the full 'create initial files and folders', their file names, npm install. -> in this -> parsed response -> check if package.json is there, if yes, before the encounter of npm run dev add npm install in the string
-            const strInTheLeft = parsedResp[0]
-            const msgHistory2 = chatMsgHistory.map((msgObj) => {return {...msgObj}})
-            msgHistory2.push({role: "assistant", msg: strInTheLeft}) 
+            //add npm install just above nm run dev if package.json exists
+            const modifiedChatMsg = parsedResp
+            // const msgHistory2 = chatMsgHistory.map((msgObj) => {return {...msgObj}})
+            const msgHistory2 = [...msgHistory]
+            msgHistory2.push({role: "assistant", msg: modifiedChatMsg}) 
             //save the string to print of the left side in CHATMSGHISTORY(store)
             dispatch(manageChatMsgHistory(msgHistory2))
 
-            //build the files in WC using parsed response -> there make appropriate modifications to the chngedFiles array -> come here after all the files are mounted -> save the files in the last msg and upon refresh use this [length-1] to re mount all the files in WC -> save in the messages( use fabricatedMsg), save all the code of changed files
-
             await createFilesInWCUsingArray(parsedResp, changedFiles, instance, dispatch)
 
-            const fabLastMsg = await fabricateLastMsg()
+            const nowChangedFiles = store.getState().filesAndFolders.changedFiles
+            // console.log('ChangedFiles:' , nowChangedFiles)
+            const fabLastMsg = await fabricateLastMsg(nowChangedFiles)
 
-            for(i in newMessagesArr2){
+
+            for(let i=0; i<=9; i++){
                 if(newMessagesArr2[i] == 0){
                     newMessagesArr2[i-1] = {role: "user", content: fabLastMsg}
+                    break
                 }else if(newMessagesArr2[i] != 0 && i == 9){
                     newMessagesArr2[i] = {role: "assistant", content: fabLastMsg}
-                }   
+                }
             }
 
-            //save the newMessagesArr2 in store dispatch()
-            dispatch(addMessages(newMessagesArr2)) //maybe these dispatches needs to be done in a separate funtion
+            // console.log("newMessagesArray2 herehere ", newMessagesArr2)
 
-            //save the prompt in the prompts array but before consume the content of promptsArr
-            const newPromptsArr = [...promptsArr]
+            //save the newMessagesArr2 in store dispatch()
+            dispatch(addMessages(newMessagesArr2))
+
+            //save the prompt in the promptsArr (and firstly we have cosumed the content of promptsArr)
+            const newPromptsArr = [...currPromptsArr]
             for(let p in newPromptsArr){
                 if(newPromptsArr[p] == 0){
                     newPromptsArr[p] = currentPrompt;
@@ -204,6 +198,7 @@ export function ChatWithBolty(){
                     newPromptsArr[4] = currentPrompt
                 }
             }
+            dispatch(managePromptsArr(newPromptsArr))
 
             const allFileAndFolderInWC = await getAllCurrentFolderAndFileNamesInWC('', 0)
             dispatch(manageAllFilesInWC(allFileAndFolderInWC)) 
@@ -224,13 +219,6 @@ export function ChatWithBolty(){
 
     return(
         <>
-        {/* from initial request to template->get-code add the prompt and response formatted in the chatHistory(store+session storage) */}
-            {/* take the prompt and save in prompts(store) -> request to backend(/get-code) -> the output send it to get parsed -> parsedResp to createFilesInWCUsingArray -> after the files are created now we need to show the resp in here as well(take a REGEXP, except the boltArtifact show everything -> chatHistory(store) will have all the formatted chats -> as the response came take the text except bolt artifact -> take the bolt artifact(create a string) -> string( text before bolt artifact -> parsed array -> one by one if there is a mention of package.json include the npm install in just before the npm run dev)(false-true-false state variable) -> for the initial thingy(not from here) )*/}
-
-
-            {/* RENDER ALL THE MESSAGES HERE() */}
-            {/* Try to stream the messages here */}
-            {/* TAKE CARE OF THE WHOLE REFRESHING GAME */}
             <div className="flex min-h-screen min-w-screen bg-[#0a0a0a] text-white">
                 <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_20%_-10%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)]">
                 <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_10%_-15%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)] pl-6 pr-2 pt-4 pb-4 relative">
@@ -265,10 +253,11 @@ export function ChatWithBolty(){
                                                 })}
                                                 </div>
                                             )}})}
+                                            
                             </div>
 
                             <div className="flex flex-row pl-6">
-                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none"></input>
+                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none" value={currentPrompt}></input>
                                 <button className="" onClick={getCode}><div className="bg-[rgba(128,0,255,0.7)] px-1 py-2 rounded-md ml-2"><img src={arrow} alt="Create" className="w-7"></img></div></button>
                             </div> 
 
@@ -294,10 +283,10 @@ export function ChatWithBolty(){
                                 </div>
                             </div>
                             
-                            </>):(url? (<iframe src={url}/>) : (<div className="w-full h-full bg-gray-900"></div>)
-                                
+                            </>):(url? (<iframe className="w-[900px] h-[900px]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
                             )}
-                            {codeIsShown? (<div className="border-[1px] border-[#2f2f2f] bg-[#1e1e1e]" ref={ref} style={{ height: '100%', width: '100%', color: "#1e1e1e"}}></div>):(<div></div>)}
+                            {codeIsShown? (<><div className="border-[1px] border-[#2f2f2f] bg-[#1e1e1e]" ref={ref} style={{ height: '100%', width: '100%', color: "#1e1e1e"}}></div>
+                            </>):(<div></div>)}
                             
                         </div>
                         </div>

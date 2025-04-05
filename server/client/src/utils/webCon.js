@@ -2,6 +2,7 @@ import { WebContainer } from '@webcontainer/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { manageChangedFiles, setIframeURL } from '../store/filesAndFoldersSlice';
 import store from '../store/store.js'
+import { useOutletContext } from "react-router-dom";
 
 const webcontainerInstance = await WebContainer.boot();
 
@@ -69,8 +70,11 @@ export async function runScriptInWC(script, instance, dispatch){
         cmdOutput.output.pipeTo(new WritableStream({
             write(data){
                 console.log(data)
-            }
+                instance?.write('Welcome react-xtermjs!')
+            }   
         }))
+
+        instance?.writeln('')
 
         if(script.trim() == "npm run dev"){
             console.log(script, "herehrehreh")

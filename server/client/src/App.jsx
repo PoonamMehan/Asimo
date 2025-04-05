@@ -37,18 +37,26 @@ useEffect(()=>{
   //   }
   // }, [ref, instance])
 
-    
+useEffect(()=>{
+  instance?.onData((d)=>{
+    instance?.write(d)
+  })
 
-  // const onResize = (cols, rows) => {
-  //   console.log(`Terminal resized to ${cols} columns and ${rows} rows`)
-  // } onResize={onResize}
+}, [])
+
+  useEffect(()=>{
+    instance?.onData((d)=>{
+      instance?.write(d)
+    })
+  }, [ref, instance])
+  
   
  
   return (
     <>
       {/* <Editor height="90vh" defaultLanguage="javascript" defaultValue={value} />; */}
       {/* <div ref={ref} style={{ height: '100%', width: '100%' }}></div> */}
-      <Outlet context={{instance: instance, ref:ref, test: "WORKING WORKING WORKING"}}/>
+      <Outlet context={{instance: instance, ref:ref, test: "WORKING"}}/>
     </>
   )
 }

@@ -20,8 +20,10 @@ const template = async(req, res)=>{
     for await (const chunk of ansStream) {
         // console.log(chunk.choices[0]?.delta?.content || "");
         completeAns += chunk.data.choices[0]?.delta?.content || ""
+        // completeAns += chunk.choices[0]?.delta?.content || ""
 
     }
+    
     
     if(completeAns == "react-vite-ts"){
         res.json({
@@ -63,6 +65,7 @@ const getContentFromLLM = async(req, res)=>{
 
     for await (const chunk of ansStream) {
         let currChunk = chunk.data.choices[0]?.delta?.content || ""
+        // let currChunk = chunk.choices[0]?.delta?.content || ""
         currChunk = encoder.encode(currChunk);
         res.write(currChunk)
     }

@@ -49,9 +49,9 @@ import { Mistral } from "@mistralai/mistralai";
 //     stream: true,
 //   });
 
-  // for await (const chunk of stream) {
-  //     process.stdout.write(chunk.choices[0]?.delta?.content || "");
-  // }
+//   // for await (const chunk of stream) {
+//   //     process.stdout.write(chunk.choices[0]?.delta?.content || "");
+//   // }
 //   return stream;
 // }
 

@@ -116,9 +116,11 @@ export function Home(){
 
                     const lastPromptMsg = await fabricateLastMsg(nowChangedFiles);
 
+                    console.log("lastPromptMsg ", lastPromptMsg)
                     // console.log("prompt msg", lastPromptMsg)
                     messagesNew2[4] = {role: "user", content: lastPromptMsg}
                     dispatch(addMessages(messagesNew2))
+                    console.log("messagesNew2, final from initial page ", messagesNew2)
 
 
                     //chatBox on the left shows converstaion between user and the LLM, the user's prompts is showns as it is, but, the response from LLM isn't shown as it is. We need to insert "Create initial files and 'npm install'" in it
@@ -140,6 +142,7 @@ export function Home(){
                     const updatedChatMsgHistory2 = [...updatedChatMsgHistory]
                     updatedChatMsgHistory2.push({role: "assistant", msg: modifiedChatMsg});
                     dispatch(manageChatMsgHistory(updatedChatMsgHistory2));
+
 
                     //since now all the files and folders are created, we need to update the fileExplorer
                     const allFileAndFolderStruct2 = await getFilesAndFolderNames()
