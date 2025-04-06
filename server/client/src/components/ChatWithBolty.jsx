@@ -23,12 +23,12 @@ export function ChatWithBolty(){
     const [fileContentForMonaco, setFileContentForMonaco] = useState("")
     const [codeIsShown, setCodeIsShown] = useState(true)
     const url = useSelector((state)=> state.filesAndFolders.iframeURL)
+    const scrollToBottomDivRef = useRef(null)
 
     // const {ref} = useXTerm()
     const {instance, test, ref} = useOutletContext()
 
     useEffect(()=>{console.log("URLh", url)}, [url])
-
 
     useEffect(()=>{
         const getDefaultEditorContent = async() => {
@@ -39,6 +39,10 @@ export function ChatWithBolty(){
         console.log("instance", instance?(instance):("nah"), "ref", ref?(ref):"nah2")
         
     }, [])
+
+    useEffect(()=>{
+        scrollToBottomDivRef.current?.scrollIntoView({ behaviour: 'auto' })
+    }, [chatMsgHistory])
     
 
     async function changeTheFileOpened(filePath){
@@ -235,13 +239,13 @@ export function ChatWithBolty(){
                             <div className="pl-6">
                                 {chatMsgHistory.map((msg, idx)=>{
                                     if(msg.role == "user"){
-                                        return (<div key={idx} className="flex flex-row bg-[#262626] items-center px-6 py-3 rounded-md max-w-[570px] mb-5 w-full">
+                                        return (<div key={idx} className="flex flex-row bg-[#262626] items-center px-6 py-3 rounded-md max-w-[570px] mb-5 w-full border-[#59595990] border-[1px]">
                                             {/* <img className="inline-block"></img> */}
                                             <div className="bg-purple-900 rounded-full w-9 h-9 mr-3"></div>
                                             <div className="inline-block">{msg.msg}</div>
                                         </div>)
                                     }else if(msg.role == "assistant"){
-                                        return (<div key={idx} className="flex flex-col bg-[#262626] items-center px-6 py-5 rounded-md w-full mb-5">
+                                        return (<div key={idx} className="flex flex-col bg-[#262626] items-center px-6 py-5 rounded-md w-full mb-5 border-[#59595990] border-[1px]">
                                                 {msg.msg && msg.msg.map((msgPart, idx)=> {
                                                     if(msgPart.type=="CreateFile"){
                                                         return <p key={idx} className="bg-[#171717] px-4 py-4 w-full">{msgPart.title}</p>
@@ -259,11 +263,16 @@ export function ChatWithBolty(){
                                                 })}
                                                 </div>
                                             )}})}
-                                            
+                                <div ref={scrollToBottomDivRef}></div>     
                             </div>
 
                             <div className="flex flex-row pl-6">
-                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none" value={currentPrompt}></input>
+                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none" value={currentPrompt} onKeyDown={(e)=>{
+                                    if(e.key == "Enter" && !e.shiftKey){
+                                        e.preventDefault()
+                                        getCode()
+                                    }
+                                }}></input>
                                 <button className="" onClick={getCode}><div className="bg-[rgba(128,0,255,0.7)] px-1 py-2 rounded-md ml-2"><img src={arrow} alt="Create" className="w-7"></img></div></button>
                             </div> 
 
@@ -289,7 +298,7 @@ export function ChatWithBolty(){
                                 </div>
                             </div>
                             
-                            </>):(url? (<iframe className="w-[900px] h-[80vh]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
+                            </>):(url? (<iframe className="w-[68vw] h-[85vh]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
                             )}
                             {codeIsShown? (<><div className="border-[1px] border-[#2f2f2f] bg-[#1e1e1e]" ref={ref} style={{ height: '100%', width: '100%', color: "#1e1e1e"}}></div>
                             </>):(<div></div>)}

@@ -16,40 +16,45 @@ const template = async(req, res)=>{
     // console.log(ans);
     // res.json({ans});
     let completeAns = "";
-    const ansStream = await getAnswerFromChatGPT(msgsArray);
-    for await (const chunk of ansStream) {
-        // console.log(chunk.choices[0]?.delta?.content || "");
-        completeAns += chunk.data.choices[0]?.delta?.content || ""
-        // completeAns += chunk.choices[0]?.delta?.content || ""
-
-    }
+    try{const ansStream = await getAnswerFromChatGPT(msgsArray);
+        for await (const chunk of ansStream) {
+            // console.log(chunk.choices[0]?.delta?.content || "");
+            completeAns += chunk.data.choices[0]?.delta?.content || ""
+            // completeAns += chunk.choices[0]?.delta?.content || ""
     
-    
-    if(completeAns == "react-vite-ts"){
-        res.json({
-            prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n${reactPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`, 
-                beautifyReactPrompt,
+        }
+        
+        
+        if(completeAns == "react-vite-ts"){
+            res.json({
+                prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n${reactPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`, 
+                    beautifyReactPrompt,
+                    `${commonPrompt[0]}${reqPayload}${commonPrompt[1]}`
+                ],
+                uiPrompts: initialReactFoldersAndFiles
+            })
+        }else if(completeAns == "nextjs-shadcn"){
+            res.json({
+                prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n.${nextjsPrompt}${existNotShownList}`, 
+                beautifyNextjs,
                 `${commonPrompt[0]}${reqPayload}${commonPrompt[1]}`
-            ],
-            uiPrompts: initialReactFoldersAndFiles
-        })
-    }else if(completeAns == "nextjs-shadcn"){
-        res.json({
-            prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n.${nextjsPrompt}${existNotShownList}`, 
-            beautifyNextjs,
-            `${commonPrompt[0]}${reqPayload}${commonPrompt[1]}`
-            ],
-            uiPrompts: initialNextJSFoldersAndFiles
-        })
-    }else if(completeAns == 'node'){
-        res.json({
-            prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n${nodejsPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`,
-            "Build an efficient backend, modular in style.",
-            `Current Message:\n\n${reqPayload}`
-            ],
-            uiPrompts: initialNodeJSFoldersAndFiles
-        })
-    }
+                ],
+                uiPrompts: initialNextJSFoldersAndFiles
+            })
+        }else if(completeAns == 'node'){
+            res.json({
+                prompts: [`Project Files:\n\nThe following is a list of all project files and their complete contents that are currently visible and accessible to you.\n\n${nodejsPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`,
+                "Build an efficient backend, modular in style.",
+                `Current Message:\n\n${reqPayload}`
+                ],
+                uiPrompts: initialNodeJSFoldersAndFiles
+            })
+        }}catch(err){
+            res.status(500).json({
+                error: err
+            })
+        }
+    
 }
 
 const getContentFromLLM = async(req, res)=>{

@@ -30,9 +30,12 @@ export function Home(){
     }
 
     const create = async ()=>{
+
+        try{
         const tempResp = await axios.post('/api/v1/chat/template', {
             prompt: initialPrompt
         })
+        
         const initialCodeStructure = tempResp.data.uiPrompts
         //save in store initial code structure, cuz: this structure is in object format and upon refresh, the web app will use this to recreate files in WC
         dispatch(addInitialFiles(initialCodeStructure))
@@ -158,6 +161,9 @@ export function Home(){
             console.log(err);
         }) 
 
+    }catch(err){
+        console.log(err)
+    }
         
     }
 
