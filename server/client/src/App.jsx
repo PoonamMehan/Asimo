@@ -2,61 +2,18 @@ import './App.css'
 import {useState, useEffect, useRef} from 'react'
 import { Outlet } from 'react-router-dom';
 import { useXTerm } from 'react-xtermjs'
+import { Terminal } from '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
 
 function App() {
-  
-  
-  
-  const {instance, ref} = useXTerm()
-useEffect(()=>{
-    //make value a state and when it changes, make change in the monaco model
-      console.log(instance, ref)
-      //when change is from the llm 
-      //when  change is from the user(save this and give it to the llm) (how are we saving the convo?)
-  }, [instance, ref])
 
-  // useEffect(() => {
-  //   // Load the fit addon
-  //   instance?.loadAddon(fitAddon)
-
-  //   const handleResize = () => fitAddon.fit()
-
-  //   // Write custom message on your terminal
-  //   instance?.writeln('Welcome react-xtermjs!')
-  //   instance?.writeln('This is a simple example using an addon.')
-  //   instance?.writeln('write any thing on our own but about the user?')
-
-  //   instance?.onData((d)=>{
-  //     instance?.write(d)
-  //   })
-  //   // Handle resize event
-    
-  //   window.addEventListener('resize', handleResize)
-  //   return () => {
-  //     window.removeEventListener('resize', handleResize)
-  //   }
-  // }, [ref, instance])
-
-useEffect(()=>{
-  instance?.onData((d)=>{
-    instance?.write(d)
-  })
-
-}, [])
-
-  useEffect(()=>{
-    instance?.onData((d)=>{
-      instance?.write(d)
-    })
-  }, [ref, instance])
-  
-  
+  const term = new Terminal({fontFamily: '', letterSpacing: -1, fontSize: 16, lineHeight: 2, theme:{background: '#1e1e1e'}})
  
   return (
     <>
       {/* <Editor height="90vh" defaultLanguage="javascript" defaultValue={value} />; */}
       {/* <div ref={ref} style={{ height: '100%', width: '100%' }}></div> */}
-      <Outlet context={{instance: instance, ref:ref, test: "WORKING"}}/>
+      <Outlet context={{term: term}} />
     </>
   )
 }

@@ -1,17 +1,16 @@
 import {useDispatch, useSelector} from 'react-redux'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef} from 'react'
 import { addMessages, manageChatMsgHistory, manageAllFilesInWC, managePromptsArr} from '../store/filesAndFoldersSlice.js'
 import { accessFileContentFromWC } from '../utils/webCon.js'
 import { createFilesInWCUsingArray, getAllCurrentFolderAndFileNamesInWC} from '../utils/webCon.js'
 import Editor from '@monaco-editor/react';
 import arrow from "./next.png"
 import { useOutletContext } from "react-router-dom";
-import { useXTerm } from 'react-xtermjs'
 import store from '../store/store.js';
 import { parseXml } from '../utils/respParser.js'
+import '@xterm/xterm/css/xterm.css'
 
-
-export function ChatWithBolty(){
+export const ChatWithBolty = ()=>{
 
     const chatMsgHistory = useSelector((state)=> state.filesAndFolders.chatMsgHistory)
     const promptsArr = useSelector((state)=> state.filesAndFolders.promptsArr)
@@ -24,9 +23,13 @@ export function ChatWithBolty(){
     const [codeIsShown, setCodeIsShown] = useState(true)
     const url = useSelector((state)=> state.filesAndFolders.iframeURL)
     const scrollToBottomDivRef = useRef(null)
+    const [localTerminalReady, setLocalTerminalReady] = useState(false)
+    const refToTerminalDiv = useRef(null)
+    const [terminalInitialised, setTerminalInitialised] = useState(false)
 
-    // const {ref} = useXTerm()
-    const {instance, test, ref} = useOutletContext()
+    const {term} = useOutletContext()
+    const xtermRef = useRef(null)
+    
 
     useEffect(()=>{console.log("URLh", url)}, [url])
 
@@ -36,14 +39,14 @@ export function ChatWithBolty(){
             setFileContentForMonaco(defaultFileOpenedContent)
         }
         getDefaultEditorContent();
-        console.log("instance", instance?(instance):("nah"), "ref", ref?(ref):"nah2")
-        
+        term?.open(xtermRef.current)
+        console.log("term", term)
+
     }, [])
 
     useEffect(()=>{
         scrollToBottomDivRef.current?.scrollIntoView({ behaviour: 'auto' })
     }, [chatMsgHistory])
-    
 
     async function changeTheFileOpened(filePath){
         console.log("Button clicked")
@@ -66,14 +69,19 @@ export function ChatWithBolty(){
     }
 
     async function getCode(){
+
+        const currentPromptCopy = currentPrompt
+        //currenPrompt clear it
+        setCurrentPrompt("")
+
         //as the user enters the prompt and sends it, show it on the left-side chatBox
         const currChatMsgHistory = store.getState().filesAndFolders.chatMsgHistory
         const msgHistory = [...currChatMsgHistory]
-        msgHistory.push({role: "user", msg: currentPrompt})
+        msgHistory.push({role: "user", msg: currentPromptCopy})
         dispatch(manageChatMsgHistory(msgHistory))
 
         //take in the 
-        let extraText = `<bolt_running_commands>\n</bolt_running_commands>\n\nCurrent Message:\n\n${currentPrompt}\n\nFile Changes:\n\nHere is a list of all files that have been modified since the start of the conversation.This information serves as the true contents of these files!\n\nThe contents include either the full file contents or a diff (when changes are smaller and localized).\n\nUse it to:\n - Understand the latest file modifications\n - Ensure your suggestions build upon the most recent version of the files\n - Make informed decisions about changes\n - Ensure suggestions are compatible with existing code\n\n`
+        let extraText = `<bolt_running_commands>\n</bolt_running_commands>\n\nCurrent Message:\n\n${currentPromptCopy}\n\nFile Changes:\n\nHere is a list of all files that have been modified since the start of the conversation.This information serves as the true contents of these files!\n\nThe contents include either the full file contents or a diff (when changes are smaller and localized).\n\nUse it to:\n - Understand the latest file modifications\n - Ensure your suggestions build upon the most recent version of the files\n - Make informed decisions about changes\n - Ensure suggestions are compatible with existing code\n\n`
         const currMessages = store.getState().filesAndFolders.messages
         const newMessagesArr = currMessages.map((msg)=>{return typeof msg === "object"? {...msg} : msg})
 
@@ -170,7 +178,7 @@ export function ChatWithBolty(){
             //save the string to print of the left side in CHATMSGHISTORY(store)
             dispatch(manageChatMsgHistory(msgHistory2))
 
-            await createFilesInWCUsingArray(parsedResp, changedFiles, instance, dispatch)
+            await createFilesInWCUsingArray(parsedResp, changedFiles, term, dispatch)
 
             const nowChangedFiles = store.getState().filesAndFolders.changedFiles
             // console.log('ChangedFiles:' , nowChangedFiles)
@@ -195,7 +203,7 @@ export function ChatWithBolty(){
             const newPromptsArr = [...currPromptsArr]
             for(let p in newPromptsArr){
                 if(newPromptsArr[p] == 0){
-                    newPromptsArr[p] = currentPrompt;
+                    newPromptsArr[p] = currentPromptCopy;
                     break;
                 }else if(p == 4 && newPromptsArr[p] != 0){
                     let idx = 1;
@@ -203,7 +211,7 @@ export function ChatWithBolty(){
                         newPromptsArr[idx-1] = newPromptsArr[idx]
                         idx++;
                     }
-                    newPromptsArr[4] = currentPrompt
+                    newPromptsArr[4] = currentPromptCopy
                 }
             }
             dispatch(managePromptsArr(newPromptsArr))
@@ -211,8 +219,6 @@ export function ChatWithBolty(){
             const allFileAndFolderInWC = await getAllCurrentFolderAndFileNamesInWC('', 0)
             dispatch(manageAllFilesInWC(allFileAndFolderInWC)) 
 
-            //currenPrompt clear it
-            setCurrentPrompt("")
             //streaming? 
         }).catch((err)=>{
             console.log(err)
@@ -230,8 +236,8 @@ export function ChatWithBolty(){
     return(
         <>
             <div className="flex min-h-screen min-w-screen bg-[#0a0a0a] text-white">
-                <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_20%_-10%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)]">
-                <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_10%_-15%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)] pl-6 pr-2 pt-4 pb-4 relative">
+                <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_20%_-10%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)] fixed t-0"></div>
+                <div className="flex min-h-screen min-w-screen bg-[radial-gradient(circle_250px_at_10%_-15%,rgba(128,0,255,0.7),rgba(128,0,255,0.2)_60%,transparent_100%)] pl-6 pr-2 pt-4 pb-4 relative t-0">
                 {/* Left side chat Box */}
                     
                         <div className="flex flex-col pl-6 overflow-y-auto w-[30%] pr-12">
@@ -298,15 +304,23 @@ export function ChatWithBolty(){
                                 </div>
                             </div>
                             
-                            </>):(url? (<iframe className="w-[68vw] h-[85vh]" src={url}/>) : (<div className=" w-[700px] h-[500px] bg-gray-900 "></div>)
+                            </>):(url? (<iframe className="w-[68vw] h-[88vh]" src={url}/>) : (<div className=" w-[68vw] h-[86vh] bg-gray-900 "></div>)
                             )}
-                            {codeIsShown? (<><div className="border-[1px] border-[#2f2f2f] bg-[#1e1e1e]" ref={ref} style={{ height: '100%', width: '100%', color: "#1e1e1e"}}></div>
-                            </>):(<div></div>)}
-                            
+                            {codeIsShown? (<div 
+                                className="border-[1px] border-t-[4px] border-[#2f2f2f] h-[18vh] w-[100%] bg-[#1e1e1e] overflow-y-auto p-2" id="terminal" ref={xtermRef}
+                            ></div> ):(<></>)
+                            }
+                            {/* {console.log("REF", ref)}
+                            {console.log("REF dot curr", ref.current)} */}
+                            {/* {localTerminalReady && (
+                                // Your terminal content or commands
+                                <button onClick={() => instance?.writeln('Hello Terminal!')}>
+                                    Test Terminal
+                                </button>
+                            )} */}
+                            {/*<XTerm style={{ width: '100%', height: '18vh' }} options={{ cursorBlink: true }} listeners={{onData}} terminalRef={xTermRef}/> */}
                         </div>
                         </div>
-                    
-                </div>
                 </div>
             </div>
         </>

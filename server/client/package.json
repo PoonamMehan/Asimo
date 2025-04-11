@@ -14,8 +14,6 @@
     "@reduxjs/toolkit": "^2.6.1",
     "@tailwindcss/vite": "^4.0.17",
     "@webcontainer/api": "^1.5.1-internal.9",
-    "@xterm/addon-fit": "^0.10.0",
-    "@xterm/xterm": "^5.5.0",
     "axios": "^1.8.2",
     "bolt_proj_server": "file:..",
     "react": "^19.0.0",

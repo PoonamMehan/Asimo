@@ -16,7 +16,7 @@ export async function createFilesInWCFromObj(filesObj){
 }
 
 
-export async function createFilesInWCUsingArray(filesArr, changedFiles, instance, dispatch){
+export async function createFilesInWCUsingArray(filesArr, changedFiles, term, dispatch){
     let packageJsonExists = false
     const mySetOfChangedFiles = new Set(changedFiles);
 
@@ -37,17 +37,21 @@ export async function createFilesInWCUsingArray(filesArr, changedFiles, instance
         }else if(task.type == "RunScript"){
 
             if(task.code == "npm run dev" && packageJsonExists){
-                instance?.writeln('npm install')
-                await runScriptInWC("npm install", instance, dispatch)
-                instance?.writeln(task.code)
-                await runScriptInWC(task.code, instance, dispatch)
+                // instance?.writeln('npm install')
+                term?.write('npm install')
+                await runScriptInWC("npm install", term, dispatch)
+                // instance?.writeln(task.code)
+                term?.write(task.code)
+                await runScriptInWC(task.code, term, dispatch)
             }else if(task.code == "npm run dev"){
-                instance?.writeln(task.code)
-                await runScriptInWC(task.code, instance, dispatch)
+                // instance?.writeln(task.code)
+                term?.write(task.code)
+                await runScriptInWC(task.code, term, dispatch)
             }
             else{
-                instance?.writeln(task.code)
-                await runScriptInWC(task.code, instance, dispatch)
+                // instance?.writeln(task.code)
+                term?.writeln(task.code)
+                await runScriptInWC(task.code, term, dispatch)
             }
         }
     }))
@@ -55,7 +59,7 @@ export async function createFilesInWCUsingArray(filesArr, changedFiles, instance
     store.dispatch(manageChangedFiles(Array.from(mySetOfChangedFiles)))
 }
 
-export async function runScriptInWC(script, instance, dispatch){
+export async function runScriptInWC(script, term, dispatch){
         
         const scriptArr = script.split(' ');
         const cmdOptnsArr = scriptArr.filter((element, idx)=> idx!=0 )
@@ -70,11 +74,13 @@ export async function runScriptInWC(script, instance, dispatch){
         cmdOutput.output.pipeTo(new WritableStream({
             write(data){
                 console.log(data)
-                instance?.write('Welcome react-xtermjs!')
-            }   
+                // instance?.write('Welcome react-xtermjs!')
+                term?.write(data)
+            } 
+              
         }))
 
-        instance?.writeln('')
+        // instance?.writeln('')
 
         if(script.trim() == "npm run dev"){
             console.log(script, "herehrehreh")
