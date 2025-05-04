@@ -1,4 +1,4 @@
-import './App.css'
+import './index.css'
 import {useState, useEffect, useRef} from 'react'
 import { Outlet } from 'react-router-dom';
 import { useXTerm } from 'react-xtermjs'
@@ -7,7 +7,7 @@ import '@xterm/xterm/css/xterm.css';
 
 function App() {
 
-  const term = new Terminal({fontFamily: '', letterSpacing: -1, fontSize: 16, lineHeight: 2, theme:{background: '#1e1e1e'}})
+  const term = new Terminal({theme:{background: '#1e1e1e'}})
  
   return (
     <>

@@ -4,6 +4,26 @@
 @import "tailwindcss";
 
 
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@theme {
+  --animate-border: border-rotate 4s linear infinite;
+  
+  @keyframes border-rotate {
+    from {
+      --border-angle: 0deg;
+    }
+    to {
+      --border-angle: 360deg;
+    }
+  }
+}
+
+
 
 ::-webkit-scrollbar {
     width: 3px; /* Width of the scrollbar */
@@ -22,8 +42,10 @@
     background: #2d3748; /* Darker color on hover */
   }
 
-  @property --border-angle {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 0deg;
+
+
+
+.animated-border {
+  background: linear-gradient(45deg, #172033, #1e293b 50%, #172033) padding-box,
+    conic-gradient(from var(--border-angle), rgba(71, 85, 105, 0.48) 80%, #6366f1 86%, #a5b4fc 90%, #6366f1 94%, rgba(71, 85, 105, 0.48)) border-box;
 }

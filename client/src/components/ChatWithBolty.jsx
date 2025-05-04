@@ -44,39 +44,79 @@ export const ChatWithBolty = ()=>{
 
     }, [])
 
-    useEffect(()=>{
-        if(codeIsShown){
-            xtermRef.current = document.getElementById("terminal")
-            console.log("curr", xtermRef.current)
-            term?.open(xtermRef.current)
-            term.write("Terminal Visible")
-            console.log("term", term)
-        }else if(!codeIsShown){
-            term?.dispose()
-            console.log("curr ref", xtermRef.current)
-        }
-    }, [codeIsShown, xtermRef])
+    // useEffect(()=>{
+    //     if(codeIsShown){
+    //         xtermRef.current = document.getElementById("terminal")
+    //         console.log("curr", xtermRef.current)
+    //         term?.open(xtermRef.current)
+    //         term.write("Terminal Visible")
+    //         console.log("term", term)
+    //     }else if(!codeIsShown){
+    //         term?.dispose()
+    //         console.log("curr ref", xtermRef.current)
+    //     }
+    // }, [codeIsShown, xtermRef])
 
-    // useEffect(() => {
+    useEffect(() => {
+        console.log("I am in useEffect")
+        if (codeIsShown) {
+          const container = xtermRef.current;
+            console.log("Inside codeIsShown")
+          // Only open if the container exists and term hasn't been opened yet
+          if (container && term) {
+            term.open(container);
+            term.write("Terminal is now visible\r\n");
+            console.log("Terminal is open console")
+            console.log(term)
+            console.log(container)
+          }
+        } else {
+            console.log("Terminal was unable to open")
+          if (term) {
+            try {
+              term.dispose();
+            } catch (err) {
+              console.error("Error resetting term:", err);
+            }
+          }
+        }
+      }, [codeIsShown, term]);
+      const [isXtermReady, setIsXtermReady] = useState(false);
+
+
+      // This effect runs when codeIsShown is true and waits for the ref to attach
+    //   useEffect(() => {
     //     if (codeIsShown) {
-    //       const container = xtermRef.current;
+    //       // Delay to next tick to ensure ref is attached
+    //       const timeout = setTimeout(() => {
+    //         if (xtermRef.current) {
+    //           setIsXtermReady(true);
+    //         }
+    //       }, 1); // next tick
       
-    //       // Only open if the container exists and term hasn't been opened yet
-    //       if (container && term) {
-    //         term.open(container);
-    //         term.write("Terminal is now visible\r\n");
-    //       }
+    //       return () => clearTimeout(timeout);
     //     } else {
+    //       setIsXtermReady(false);
     //       if (term) {
     //         try {
-    //           term.clear(); // optional: clear instead of dispose if reused elsewhere
+    //           term.clear();
     //           term.reset();
     //         } catch (err) {
     //           console.error("Error resetting term:", err);
     //         }
     //       }
     //     }
-    //   }, [codeIsShown, term]);
+    //   }, [codeIsShown]);
+      
+    //   // This effect actually mounts the terminal
+    //   useEffect(() => {
+    //     if (isXtermReady && xtermRef.current) {
+    //       term.open(xtermRef.current);
+    //       term.write("Terminal is now visible\r\n");
+    //     }
+    //   }, [isXtermReady]);
+
+      
 
     async function changeTheFileOpened(filePath){
         console.log("Button clicked")
@@ -303,13 +343,13 @@ export const ChatWithBolty = ()=>{
                             </div>
 
                             <div className="flex flex-row pl-6">
-                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none" value={currentPrompt} onKeyDown={(e)=>{
+                                <input type="text" onChange={(e)=>setCurrentPrompt(e.target.value)} className="flex-1 bg-[#262626] p-2 rounded-md text-white focus:outline-none border border-[#59595990]" value={currentPrompt} onKeyDown={(e)=>{
                                     if(e.key == "Enter" && !e.shiftKey){
                                         e.preventDefault()
                                         getCode()
                                     }
                                 }}></input>
-                                <button className="" onClick={getCode}><div className="bg-[rgba(128,0,255,0.7)] px-1 py-2 rounded-md ml-2"><img src={arrow} alt="Create" className="w-7"></img></div></button>
+                                <button className="" onClick={getCode}><div className="bg-[rgba(128,0,255,0.7)] px-1 py-2 rounded-md ml-2 border border-[rgba(134,75,189,0.86)]"><img src={arrow} alt="Create" className="w-7"></img></div></button>
                             </div> 
 
                         </div>
@@ -324,7 +364,7 @@ export const ChatWithBolty = ()=>{
                             </div>
                             {codeIsShown? (<>
                             <div className="flex flex-grow">
-                                <div className="flex flex-col p-2 h-[70vh] overflow-y-auto border-r-[1px] border-[#2f2f2f] ">
+                                <div className="flex flex-col p-2 pl-5 h-[70vh] overflow-y-auto border-r-[1px] border-[#2f2f2f] ">
                                 {allFilesInWC.map((element, idx)=>{
                                     return <div key={idx} onClick={()=>changeTheFileOpened(element.path)} className="hover:cursor-pointer whitespace-pre text-gray-300" dangerouslySetInnerHTML={{ __html: `<span style="color: #c1ccc2;">${element.val}</span>` }} ></div>
                                 })}
@@ -334,7 +374,7 @@ export const ChatWithBolty = ()=>{
                                 </div>
                             </div>
                             
-                            </>):(url? (<iframe className="w-[68vw] h-[88vh]" src={url}/>) : (<div className=" w-[68vw] h-[86vh] bg-gray-900 "></div>)
+                            </>):(url? (<iframe className="w-[68vw] h-[88vh]" src={url}/>) : (<div className=" w-[68vw] h-[88vh] bg-gray-900 "></div>)
                             )}
                             {codeIsShown? (<div 
                                 className="border-[1px] border-t-[4px] border-[#2f2f2f] h-[18vh] w-[100%] bg-[#1e1e1e] overflow-y-auto p-2" id="terminal" ref={xtermRef}

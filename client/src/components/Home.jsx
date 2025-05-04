@@ -8,7 +8,7 @@ import {useNavigate} from 'react-router-dom'
 import store from '../store/store.js';
 import arrow from "./next.png"
 import { useOutletContext } from "react-router-dom";
-
+import '../index.css';
 
 export function Home(){
     const dispatch = useDispatch();
@@ -186,7 +186,7 @@ export function Home(){
                         <p className="text-gray-400 mb-6">Prompt and build full stack React, NodeJS and NextJS Web Apps.</p>
                     </div>
                     <div className="relative">
-                        <div className="w-[550px] max-w-[550px] h-32 rounded-md border border-transparent bg-[#141414] [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box] animate-border">
+                        <div className="w-[553px] h-[131px] rounded-md border-2 border-transparent animate-border [background:linear-gradient(45deg,#172033,#1e293b_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),rgba(71,85,105,0.48)_80%,#6366f1_86%,#a5b4fc_90%,#6366f1_94%,rgba(71,85,105,0.48))_border-box]">
                             <div className="bg-[#141414] w-[550px] h-32 flex relative rounded-md border-gray-600 border-[1px]">
                                 <textarea className="text-white absolute left-3 top-4 focus:outline-none focus:ring-0 h-20 w-[450px] overflow-y-auto break-words resize-none text-lg" type="text" placeholder="Enter your prompt here" onChange={(e) => initialUserPromptInput(e.target.value)} onKeyDown={(e)=>{ 
                                     if(e.key == "Enter" && !e.shiftKey){
@@ -195,7 +195,7 @@ export function Home(){
                                 }}}></textarea>
 
                                 <button className="absolute right-4 top-4" onClick={create}>
-                                    <div className="bg-[rgba(128,0,255,0.7)] px-1 py-1 rounded-md">
+                                    <div className="bg-[rgba(128,0,255,0.7)] px-1 py-1 rounded-md border border-[rgba(134,75,189,0.86)]">
                                         <img src={arrow} alt="Create" className="w-7" />
                                     </div>
                                 </button>
