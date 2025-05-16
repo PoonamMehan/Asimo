@@ -1,19 +1,16 @@
 import './index.css'
-import {useState, useEffect, useRef} from 'react'
 import { Outlet } from 'react-router-dom';
-import { useXTerm } from 'react-xtermjs'
-import { Terminal } from '@xterm/xterm';
-import '@xterm/xterm/css/xterm.css';
 
 function App() {
 
-  const term = new Terminal({theme:{background: '#1e1e1e'}})
+  // const term = new Terminal({theme:{background: '#1e1e1e'}})
  
   return (
     <>
       {/* <Editor height="90vh" defaultLanguage="javascript" defaultValue={value} />; */}
       {/* <div ref={ref} style={{ height: '100%', width: '100%' }}></div> */}
-      <Outlet context={{term: term}} />
+      {/* <Outlet context={{term: term}} /> */}
+      <Outlet />
     </>
   )
 }

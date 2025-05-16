@@ -9,6 +9,7 @@ import store from '../store/store.js';
 import arrow from "./next.png"
 import { useOutletContext } from "react-router-dom";
 import '../index.css';
+// import { terminalInst } from '../utils/terminalInstanceProvider.js'
 
 export function Home(){
     const dispatch = useDispatch();
@@ -16,7 +17,8 @@ export function Home(){
     const messages = useSelector((state)=>state.filesAndFolders.messages)
     const changedFiles = useSelector((state) => state.filesAndFolders.changedFiles)
     const [initialPrompt, setInitialPrompt] = useState("")
-    const {term} = useOutletContext()
+    // const {term} = useOutletContext()
+    // const terminalInst = useSelector((state)=>state.terminalInstStore.terminalInst)
 
     const fabricateLastMsg = async(updatedChangedFiles)=>{
         let msg = ''
@@ -56,9 +58,10 @@ export function Home(){
         //run 'npm install' manually
         //installing it here because package.json is created initially, and if the code files coming from LLm includes package.json, it will run once again before the npm run dev
         console.log("here 1")
-        // instance?.writeln('npm install')
-        term?.writeln('npm install')
-        await runScriptInWC('npm install', term)
+        const terminalInst = store.getState().terminalInstStore.terminalInst;
+        console.log("terminalinst", terminalInst)
+        
+        await runScriptInWC('npm install', true, dispatch)
         console.log("it comes here")
 
         //we maintain messges[] in store, it is an array of messages which stores the prompts to web container
@@ -112,7 +115,7 @@ export function Home(){
 
                     //now parse the response and build it inside the WC
                     const parsedResp = parseXml(result)
-                    await createFilesInWCUsingArray(parsedResp, changedFiles, term, dispatch)
+                    await createFilesInWCUsingArray(parsedResp, changedFiles, dispatch)
 
 
                     //checking if changedFiles include all the names of the files changed
@@ -158,10 +161,12 @@ export function Home(){
             }})
         
         }).catch((err)=>{
+            alert("Mistral error, refresh webapp")
             console.log(err);
         }) 
 
     }catch(err){
+        alert("Mistral error, refresh webapp")
         console.log(err)
     }
         

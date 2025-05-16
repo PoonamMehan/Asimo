@@ -8,7 +8,10 @@ import arrow from "./next.png"
 import { useOutletContext } from "react-router-dom";
 import store from '../store/store.js';
 import { parseXml } from '../utils/respParser.js'
-import '@xterm/xterm/css/xterm.css'
+import { Terminal as XTerm } from '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
+// import { setTerminalInst } from '../utils/terminalInstanceProvider.js'
+import { setTerminalInst } from '../store/terminalSlice.js'
 
 export const ChatWithBolty = ()=>{
 
@@ -23,12 +26,9 @@ export const ChatWithBolty = ()=>{
     const [codeIsShown, setCodeIsShown] = useState(true)
     const url = useSelector((state)=> state.filesAndFolders.iframeURL)
     const scrollToBottomDivRef = useRef(null)
-    const [localTerminalReady, setLocalTerminalReady] = useState(false)
-    const refToTerminalDiv = useRef(null)
-    const [terminalInitialised, setTerminalInitialised] = useState(false)
-
-    const {term} = useOutletContext()
     const xtermRef = useRef(null)
+    let terminalInst; 
+    const [_, setForceRender] = useState(0)
 
 
     useEffect(()=>{console.log("URLh", url)}, [url])
@@ -39,90 +39,41 @@ export const ChatWithBolty = ()=>{
             setFileContentForMonaco(defaultFileOpenedContent)
         }
         getDefaultEditorContent();
-        // term?.open(xtermRef.current)
-        // console.log("term", term)
-
     }, [])
 
-    // useEffect(()=>{
-    //     if(codeIsShown){
-    //         xtermRef.current = document.getElementById("terminal")
-    //         console.log("curr", xtermRef.current)
-    //         term?.open(xtermRef.current)
-    //         term.write("Terminal Visible")
-    //         console.log("term", term)
-    //     }else if(!codeIsShown){
-    //         term?.dispose()
-    //         console.log("curr ref", xtermRef.current)
-    //     }
-    // }, [codeIsShown, xtermRef])
+    useEffect(()=>{
+        scrollToBottomDivRef.current?.scrollIntoView({ behaviour: 'auto' })
+    }, [chatMsgHistory])
 
-    useEffect(() => {
-        console.log("I am in useEffect")
-        if (codeIsShown) {
-          const container = xtermRef.current;
-            console.log("Inside codeIsShown")
-          // Only open if the container exists and term hasn't been opened yet
-          if (container && term) {
-            term.open(container);
-            term.write("Terminal is now visible\r\n");
-            console.log("Terminal is open console")
-            console.log(term)
-            console.log(container)
-          }
-        } else {
-            console.log("Terminal was unable to open")
-          if (term) {
-            try {
-              term.dispose();
-            } catch (err) {
-              console.error("Error resetting term:", err);
-            }
-          }
+    useEffect(()=>{
+        if(codeIsShown){
+            const element = xtermRef.current
+            terminalInst = new XTerm({
+                theme:{background: '#1e1e1e'}, 
+                disableStdin: true,
+                fontSize: 14
+            })
+            terminalInst.open(element);
+            terminalInst.writeln("Terminal is Open")
+            dispatch(setTerminalInst(terminalInst));
+            console.log("TErminal instance dispatched", terminalInst)
+            //since the very first time. Well compare the situation in which first null is reaching there and the second one in which no null is being enered in runScriptInWC
+            //it is not just about the 'npm install' it remains the same all the time(non working), till we once again dispatch the new terminalInst
+            // setForceRender((prev)=>prev+1)
+        }else{
+            dispatch(setTerminalInst(null));
+            terminalInst?.dispose();
+            terminalInst = null;
         }
-      }, [codeIsShown, term]);
-      const [isXtermReady, setIsXtermReady] = useState(false);
-
-
-      // This effect runs when codeIsShown is true and waits for the ref to attach
-    //   useEffect(() => {
-    //     if (codeIsShown) {
-    //       // Delay to next tick to ensure ref is attached
-    //       const timeout = setTimeout(() => {
-    //         if (xtermRef.current) {
-    //           setIsXtermReady(true);
-    //         }
-    //       }, 1); // next tick
-      
-    //       return () => clearTimeout(timeout);
-    //     } else {
-    //       setIsXtermReady(false);
-    //       if (term) {
-    //         try {
-    //           term.clear();
-    //           term.reset();
-    //         } catch (err) {
-    //           console.error("Error resetting term:", err);
-    //         }
-    //       }
-    //     }
-    //   }, [codeIsShown]);
-      
-    //   // This effect actually mounts the terminal
-    //   useEffect(() => {
-    //     if (isXtermReady && xtermRef.current) {
-    //       term.open(xtermRef.current);
-    //       term.write("Terminal is now visible\r\n");
-    //     }
-    //   }, [isXtermReady]);
-
-      
+    }, [codeIsShown])
+    
 
     async function changeTheFileOpened(filePath){
         console.log("Button clicked")
         const fileContent = await accessFileContentFromWC(filePath)
         setFileContentForMonaco(fileContent)
     }
+
 
     const fabricateLastMsg = async(updatedChangedFiles)=>{
         let msg = ''
@@ -248,7 +199,7 @@ export const ChatWithBolty = ()=>{
             //save the string to print of the left side in CHATMSGHISTORY(store)
             dispatch(manageChatMsgHistory(msgHistory2))
 
-            await createFilesInWCUsingArray(parsedResp, changedFiles, term, dispatch)
+            await createFilesInWCUsingArray(parsedResp, changedFiles, dispatch)
 
             const nowChangedFiles = store.getState().filesAndFolders.changedFiles
             // console.log('ChangedFiles:' , nowChangedFiles)
@@ -291,6 +242,7 @@ export const ChatWithBolty = ()=>{
 
             //streaming? 
         }).catch((err)=>{
+            alert("Mistral error, refresh webapp")
             console.log(err)
         })
     }

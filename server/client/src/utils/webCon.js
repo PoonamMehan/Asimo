@@ -16,7 +16,7 @@ export async function createFilesInWCFromObj(filesObj){
 }
 
 
-export async function createFilesInWCUsingArray(filesArr, changedFiles, term, dispatch){
+export async function createFilesInWCUsingArray(filesArr, changedFiles, dispatch){
     let packageJsonExists = false
     const mySetOfChangedFiles = new Set(changedFiles);
 
@@ -35,23 +35,14 @@ export async function createFilesInWCUsingArray(filesArr, changedFiles, term, di
             mySetOfChangedFiles.add(task.path)
             
         }else if(task.type == "RunScript"){
-
+            let terminalInstNew = store.getState().terminalInstStore.terminalInst
             if(task.code == "npm run dev" && packageJsonExists){
-                // instance?.writeln('npm install')
-                term?.write('npm install')
-                await runScriptInWC("npm install", term, dispatch)
-                // instance?.writeln(task.code)
-                term?.write(task.code)
-                await runScriptInWC(task.code, term, dispatch)
-            }else if(task.code == "npm run dev"){
-                // instance?.writeln(task.code)
-                term?.write(task.code)
-                await runScriptInWC(task.code, term, dispatch)
+
+                await runScriptInWC("npm install", false, dispatch)
+                await runScriptInWC(task.code, false, dispatch)
             }
             else{
-                // instance?.writeln(task.code)
-                term?.writeln(task.code)
-                await runScriptInWC(task.code, term, dispatch)
+                await runScriptInWC(task.code, false, dispatch)
             }
         }
     }))
@@ -59,29 +50,34 @@ export async function createFilesInWCUsingArray(filesArr, changedFiles, term, di
     store.dispatch(manageChangedFiles(Array.from(mySetOfChangedFiles)))
 }
 
-export async function runScriptInWC(script, term, dispatch){
-        
+export async function runScriptInWC(script, firstScript, dispatch){
+        let terminalInstNew = store.getState().terminalInstStore.terminalInst
         const scriptArr = script.split(' ');
         const cmdOptnsArr = scriptArr.filter((element, idx)=> idx!=0 )
 
-        console.log("here3")
+        // const wait = () => new Promise((resolve)=>setTimeout(resolve, 2000))
+        // console.log("first script", firstScript)
+
+        // if(firstScript){
+        //     console.log("waited")
+        //     await wait()
+        //     console.log("yes waited")
+        // }
+        terminalInstNew = store.getState().terminalInstStore.terminalInst
+        terminalInstNew?.writeln(script)
+        console.log("here3 runScriptInWC", terminalInstNew)
         console.log(scriptArr[0], cmdOptnsArr)
-
-        const controller = new AbortController();
-        const { signal } = controller;
         const cmdOutput = await webcontainerInstance.spawn(scriptArr[0], cmdOptnsArr)
-
         cmdOutput.output.pipeTo(new WritableStream({
             write(data){
+                terminalInstNew = store.getState().terminalInstStore.terminalInst
                 console.log(data)
-                // instance?.write('Welcome react-xtermjs!')
-                term?.write(data)
+                console.log("INSIDE WRITING ", terminalInstNew)
+                terminalInstNew?.write(data)
             } 
-              
+            
         }))
-
-        // instance?.writeln('')
-
+        
         if(script.trim() == "npm run dev"){
             console.log(script, "herehrehreh")
             webcontainerInstance.on('server-ready', (port, url)=>{
@@ -90,7 +86,6 @@ export async function runScriptInWC(script, term, dispatch){
             dispatch(setIframeURL(url))
             })
         }
-
         console.log("Script ran: ", script)
 }
 
