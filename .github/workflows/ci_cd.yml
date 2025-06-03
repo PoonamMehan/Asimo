@@ -17,13 +17,13 @@ jobs:
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: 13.60.79.87
-          username: ubuntu
+          username: root
           key: ${{ secrets.PRIVATE_SSH_KEY }}
           port: 22
           script: | 
             cd Asimo
             git pull origin main
             cd server
-            sudo npm install
-            sudo npm run build
-            sudo pm2 reload Asimomie || sudo pm2 start npm --name "Asimomie" -- run start
+            npm install
+            npm run build
+            pm2 reload Asimomie || pm2 start npm --name "Asimomie" -- run start
