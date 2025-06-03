@@ -24,6 +24,6 @@ jobs:
             cd Asimo
             git pull origin main
             cd server
-            npm install
-            npm run build
-            pm2 reload Asimomie || pm2 start npm --name "Asimomie" -- run start
+            sudo npm install
+            sudo npm run build
+            sudo pm2 reload Asimomie || sudo pm2 start npm --name "Asimomie" -- run start
