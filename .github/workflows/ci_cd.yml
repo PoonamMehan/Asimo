@@ -1,0 +1,29 @@
+name: Deploy to Production
+
+on:
+  push: 
+    branches: [main]
+
+jobs:
+  ci_cd:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses : actions/checkout@v3
+
+      - name: SSHing into the VM and running commands
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: 13.60.79.87
+          username: ubuntu
+          key: ${{ secrets.PRIVATE_SSH_KEY }}
+          port: 22
+          script: | 
+            cd Asimo
+            git pull origin main
+            cd server
+            npm install
+            npm run build
+            pm2 reload Asimomie || pm2 start npm --name "Asimomie" -- run start
