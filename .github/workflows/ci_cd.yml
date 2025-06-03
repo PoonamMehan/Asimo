@@ -24,6 +24,7 @@ jobs:
             cd Asimo
             git pull origin main
             cd server
+            export PATH=/home/ubuntu/.nvm/versions/node/v22.15.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
             npm install
             npm run build
             pm2 reload Asimomie || pm2 start npm --name "Asimomie" -- run start
